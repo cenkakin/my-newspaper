@@ -8,8 +8,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2WebFlux;
 @EnableSwagger2WebFlux
 public class MyNewspaperApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MyNewspaperApplication.class, args);
-    }
-
+  public static void main(String[] args) {
+    SpringApplication.run(MyNewspaperApplication.class, args);
+  }
 }

@@ -1,8 +1,10 @@
 package com.github.cenkakin.mynewspaper.dto;
 
 import com.github.cenkakin.mynewspaper.domain.Article;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -11,34 +13,36 @@ import java.util.List;
  * Created by cenkakin
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public final class ArticleDto {
+public class ArticleDto {
 
-    private final String id;
+  private String id;
 
-    private final String header;
+  private String header;
 
-    private final String shortDescription;
+  private String shortDescription;
 
-    private final String text;
+  private String text;
 
-    private final LocalDate publishDate;
+  private LocalDate publishDate;
 
-    private final List<String> authors;
+  private List<String> authors;
 
-    private final List<String> keywords;
+  private List<String> keywords;
 
-    private final Long version;
+  private Long version;
 
-    public static ArticleDto fromArticle(Article article) {
-        return new ArticleDtoBuilder()
-                .id(article.getId())
-                .header(article.getHeader())
-                .shortDescription(article.getShortDescription())
-                .text(article.getText())
-                .publishDate(article.getPublishDate())
-                .authors(article.getAuthors())
-                .version(article.getVersion())
-                .keywords(article.getKeywords()).build();
-    }
+  public static ArticleDto fromArticle(Article article) {
+    return new ArticleDtoBuilder()
+        .id(article.getId())
+        .header(article.getHeader())
+        .shortDescription(article.getShortDescription())
+        .text(article.getText())
+        .publishDate(article.getPublishDate())
+        .authors(article.getAuthors())
+        .version(article.getVersion())
+        .keywords(article.getKeywords()).build();
+  }
 }

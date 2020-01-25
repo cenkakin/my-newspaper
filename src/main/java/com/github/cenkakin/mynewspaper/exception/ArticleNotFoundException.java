@@ -5,7 +5,7 @@ package com.github.cenkakin.mynewspaper.exception;
  */
 public class ArticleNotFoundException extends RuntimeException {
 
-    public ArticleNotFoundException(String id) {
-        super("Article id is not found! id: " + id);
-    }
+  public ArticleNotFoundException(String id) {
+    super("Article id is not found! id: " + id);
+  }
 }

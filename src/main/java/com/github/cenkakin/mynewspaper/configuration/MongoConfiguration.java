@@ -14,8 +14,8 @@ import javax.validation.Validator;
 @EnableMongoAuditing
 public class MongoConfiguration {
 
-    @Bean
-    public ValidatingMongoEventListener validatingMongoEventListener(Validator validator) {
-        return new ValidatingMongoEventListener(validator);
-    }
+  @Bean
+  public ValidatingMongoEventListener validatingMongoEventListener(Validator validator) {
+    return new ValidatingMongoEventListener(validator);
+  }
 }

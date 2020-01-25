@@ -1,6 +1,7 @@
 package com.github.cenkakin.mynewspaper.request;
 
 import lombok.Data;
+import lombok.Value;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -12,27 +13,27 @@ import java.util.Set;
 /**
  * Created by cenkakin
  */
-@Data
+@Value
 public final class UpdateArticleRequest {
 
-    @NotBlank
-    @Size(max = 250)
-    private String header;
+  @NotBlank
+  @Size(max = 250)
+  private final String header;
 
-    @NotBlank
-    private String shortDescription;
+  @NotBlank
+  private final String shortDescription;
 
-    @NotBlank
-    private String text;
+  @NotBlank
+  private final String text;
 
-    @NotNull
-    private LocalDate publishDate;
+  @NotNull
+  private final LocalDate publishDate;
 
-    @NotEmpty
-    private Set<String> authors;
+  @NotEmpty
+  private final Set<String> authors;
 
-    private Set<String> keywords;
+  private final Set<String> keywords;
 
-    @NotNull
-    private Long version;
+  @NotNull
+  private final Long version;
 }

@@ -1,20 +1,20 @@
 package com.github.cenkakin.mynewspaper.request;
 
-import lombok.Data;
+import lombok.Value;
 
 import java.time.LocalDate;
 
 /**
  * Created by cenkakin
  */
-@Data
+@Value
 public class SearchArticleRequest {
 
-    private final String keyword;
+  private final String keyword;
 
-    private final String author;
+  private final String author;
 
-    private final LocalDate fromPublishDate = LocalDate.now().minusDays(10);
+  private final LocalDate fromPublishDate;
 
-    private final LocalDate toPublishDate = LocalDate.now();
+  private final LocalDate toPublishDate;
 }

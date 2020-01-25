@@ -1,19 +1,19 @@
 package com.github.cenkakin.mynewspaper.service;
 
 import com.github.cenkakin.mynewspaper.domain.Article;
+import com.github.cenkakin.mynewspaper.domain.QArticle;
 import com.github.cenkakin.mynewspaper.exception.ArticleNotFoundException;
 import com.github.cenkakin.mynewspaper.exception.OutdatedUpdateArticleException;
 import com.github.cenkakin.mynewspaper.repository.ArticleRepository;
 import com.github.cenkakin.mynewspaper.request.CreateArticleRequest;
 import com.github.cenkakin.mynewspaper.request.SearchArticleRequest;
 import com.github.cenkakin.mynewspaper.request.UpdateArticleRequest;
+import com.github.cenkakin.mynewspaper.util.OptionalBooleanExpressionBuilder;
+import com.querydsl.core.types.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import javax.validation.Valid;
-import java.util.Optional;
 
 /**
  * Created by cenkakin
@@ -22,50 +22,51 @@ import java.util.Optional;
 @AllArgsConstructor
 public class ArticleService {
 
-    private static final int MAX_LIMIT = 10;
-    private static final int DEFAULT_OFFSET = 0;
+  private final ArticleRepository articleRepository;
 
-    private final ArticleRepository articleRepository;
+  public Mono<Article> createArticle(CreateArticleRequest createArticleRequest) {
+    return articleRepository.insert(Article.fromCreateArticleRequest(createArticleRequest));
+  }
 
-    public Mono<Article> createArticle(CreateArticleRequest createArticleRequest) {
-        return articleRepository.insert(Article.fromUpsertArticleRequest(createArticleRequest));
-    }
+  public Mono<Article> getArticle(String id) {
+    return articleRepository.findByIdAndDeletedFalse(id)
+        .switchIfEmpty(Mono.error(new ArticleNotFoundException(id)));
+  }
 
-    public Mono<Article> getArticle(String id) {
-        return articleRepository.findById(id)
-                .switchIfEmpty(Mono.error(new ArticleNotFoundException(id)));
-    }
+  public Mono<Article> updateArticle(String id, UpdateArticleRequest updateArticleRequest) {
+    return getArticle(id)
+        .flatMap(articleInDb -> {
+          if (articleInDb.getVersion() >= updateArticleRequest.getVersion()) {
+            return Mono.error(new OutdatedUpdateArticleException(articleInDb.getVersion()));
+          }
+          Article toBeUpdated = articleInDb.update(updateArticleRequest);
+          return articleRepository.save(toBeUpdated);
+        });
+  }
 
-    public Mono<Article> updateArticle(String id, @Valid UpdateArticleRequest updateArticleRequest) {
-        return getArticle(id)
-                .flatMap(articleInDb -> {
-                    if (articleInDb.getVersion() >= updateArticleRequest.getVersion()) {
-                        return Mono.error(new OutdatedUpdateArticleException(articleInDb.getVersion()));
-                    }
-                    Article toBeUpdated = articleInDb.update(updateArticleRequest);
-                    return articleRepository.update(toBeUpdated);
-                });
+  public Mono<Void> deleteArticle(String id) {
+    return getArticle(id)
+        .map(Article::delete)
+        .flatMap(articleRepository::save)
+        .then();
+  }
 
-    }
+  public Flux<Article> getArticles() {
+    return articleRepository.findAllByDeletedFalse();
+  }
 
-    public Mono<Void> deleteArticle(String id) {
-        return getArticle(id)
-                .flatMap(article -> {
-                    Article toBeDeleted = article.delete();
-                    return articleRepository.update(toBeDeleted);
-                }).then();
-    }
+  public Flux<Article> searchArticles(SearchArticleRequest request) {
+    Predicate searchQuery = createSearchQuery(request);
+    return articleRepository.findAll(searchQuery);
+  }
 
-    public Flux<Article> getArticles(Optional<Integer> optionalLimit, Optional<Integer> optionalOffset) {
-        final Integer limit = optionalLimit.orElse(MAX_LIMIT);
-        final Integer offset = optionalOffset.orElse(DEFAULT_OFFSET);
-        return articleRepository.findAll(limit, offset);
-    }
-
-    public Flux<Article> searchArticles(SearchArticleRequest request, Optional<Integer> optionalLimit,
-                                        Optional<Integer> optionalOffset) {
-        final Integer limit = optionalLimit.orElse(MAX_LIMIT);
-        final Integer offset = optionalOffset.orElse(DEFAULT_OFFSET);
-        return articleRepository.findAll(limit, offset);
-    }
+  private Predicate createSearchQuery(SearchArticleRequest request) {
+    QArticle articleQuery = QArticle.article;
+    return new OptionalBooleanExpressionBuilder(articleQuery.deleted.isFalse())
+        .notNullAnd(a -> articleQuery.authors.any().equalsIgnoreCase(a), request.getAuthor())
+        .notNullAnd(k -> articleQuery.keywords.any().equalsIgnoreCase(k), request.getKeyword())
+        .notNullAnd(fpd -> articleQuery.publishDate.after(fpd.minusDays(1)), request.getFromPublishDate())
+        .notNullAnd(tpd -> articleQuery.publishDate.before(tpd.plusDays(1)), request.getToPublishDate())
+        .build();
+  }
 }

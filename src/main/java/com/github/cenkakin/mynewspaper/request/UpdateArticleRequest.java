@@ -1,6 +1,5 @@
 package com.github.cenkakin.mynewspaper.request;
 
-import lombok.Data;
 import lombok.Value;
 
 import javax.validation.constraints.NotBlank;

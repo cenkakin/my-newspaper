@@ -8,6 +8,7 @@ import com.github.cenkakin.mynewspaper.request.CreateArticleRequest;
 import com.github.cenkakin.mynewspaper.request.SearchArticleRequest;
 import com.github.cenkakin.mynewspaper.request.UpdateArticleRequest;
 import com.github.cenkakin.mynewspaper.service.ArticleService;
+import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import org.springframework.core.convert.ConversionException;
 import org.springframework.http.HttpStatus;
@@ -54,6 +55,7 @@ public class ArticleController {
   }
 
   @GetMapping("articles:search")
+  @ApiOperation(value = "Search articles. All of the params are optional! 'fromPublishDate' and 'toPublishDate' are inclusive.")
   public Flux<ArticleDto> searchArticles(@Valid SearchArticleRequest searchArticleRequest) {
     return articleService.searchArticles(searchArticleRequest)
         .map(ArticleDto::fromArticle);
@@ -67,6 +69,7 @@ public class ArticleController {
   }
 
   @PutMapping("articles/{id}")
+  @ApiOperation(value = "Update an article. Don't forget to increment a version number of the article which you want to update!")
   public Mono<ResponseEntity<ArticleDto>> updateArticle(@PathVariable String id,
                                                         @Valid @RequestBody UpdateArticleRequest updateArticleRequest) {
     return articleService.updateArticle(id, updateArticleRequest)

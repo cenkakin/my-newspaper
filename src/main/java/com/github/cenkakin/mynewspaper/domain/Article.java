@@ -19,6 +19,7 @@ import javax.validation.constraints.Size;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -74,8 +75,10 @@ public class Article {
     this.deleted = false;
   }
 
-  private static Function<Set<String>, List<String>> SORT_AND_CAPITALIZE_FIRST_LETTER = set -> set.stream()
-      .map(StringUtils::capitalize).sorted().collect(Collectors.toList());
+  private static Function<Set<String>, List<String>> SORT_AND_CAPITALIZE_FIRST_LETTER = set ->
+      Optional.ofNullable(set)
+          .map(s -> s.stream().map(StringUtils::capitalize).sorted().collect(Collectors.toList()))
+          .orElse(List.of());
 
   public Article update(UpdateArticleRequest request) {
     this.header = request.getHeader();

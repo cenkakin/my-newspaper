@@ -25,7 +25,8 @@ public class ArticleService {
   private final ArticleRepository articleRepository;
 
   public Mono<Article> createArticle(CreateArticleRequest createArticleRequest) {
-    return articleRepository.insert(Article.fromCreateArticleRequest(createArticleRequest));
+    return articleRepository.insert(Article.fromCreateArticleRequest(createArticleRequest))
+        .doOnNext(article -> log.info("Article with id: {} is created", article.getId()));
   }
 
   public Mono<Article> getArticle(String id) {
@@ -41,13 +42,16 @@ public class ArticleService {
           }
           Article toBeUpdated = articleInDb.update(updateArticleRequest);
           return articleRepository.save(toBeUpdated);
-        });
+        })
+        .doOnNext(article ->
+            log.info("Article with id: {} is updated to version {}", article.getId(), article.getVersion()));
   }
 
   public Mono<Void> deleteArticle(String id) {
     return getArticle(id)
         .map(Article::delete)
         .flatMap(articleRepository::save)
+        .doOnNext(article -> log.info("Article with id: {} is deleted", article.getId()))
         .then();
   }
 

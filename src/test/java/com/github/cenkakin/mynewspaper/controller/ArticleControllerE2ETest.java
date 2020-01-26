@@ -14,8 +14,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -371,14 +373,127 @@ class ArticleControllerE2ETest {
         .isNotFound();
   }
 
+  @Test
+  void shouldReturnOneResultWhenSearchWithGivenKeywordAndAuthor() {
+    //given
+    articleRepository.saveAll(generateArticlesForTest()).subscribe();
+    URI uri = UriComponentsBuilder.fromPath("/api/v1/articles:search")
+        .queryParam("keyword", "keyword1")
+        .queryParam("author", "author3")
+        .build().toUri();
+
+    //when - then
+    webClient.get()
+        .uri(uri)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBodyList(ArticleDto.class)
+        .hasSize(1);
+  }
+
+  @Test
+  void shouldReturnOneResultWhenSearchWithGivenKeywordAndAuthorAndFromPublishDate() {
+    //given
+    articleRepository.saveAll(generateArticlesForTest()).subscribe();
+    URI uri = UriComponentsBuilder.fromPath("/api/v1/articles:search")
+        .queryParam("keyword", "keyword1")
+        .queryParam("author", "author1")
+        .queryParam("fromPublishDate", "2019-12-12")
+        .build().toUri();
+
+    //when - then
+    webClient.get()
+        .uri(uri)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBodyList(ArticleDto.class)
+        .hasSize(1);
+  }
+
+  @Test
+  void shouldReturnTwoResultsWhenSearchWithAuthorAndFromPublishDateAndToPublishDate() {
+    //given
+    articleRepository.saveAll(generateArticlesForTest()).subscribe();
+    URI uri = UriComponentsBuilder.fromPath("/api/v1/articles:search")
+        .queryParam("author", "author1")
+        .queryParam("fromPublishDate", "2019-01-12")
+        .queryParam("toPublishDate", "2020-12-12")
+        .build().toUri();
+
+    //when - then
+    webClient.get()
+        .uri(uri)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBodyList(ArticleDto.class)
+        .hasSize(2);
+  }
+
+  @Test
+  void shouldReturnTwoResultsWhenSearchWithPossibleAllFields() {
+    //given
+    articleRepository.saveAll(generateArticlesForTest()).subscribe();
+    URI uri = UriComponentsBuilder.fromPath("/api/v1/articles:search")
+        .queryParam("author", "author1")
+        .queryParam("keyword", "keyword1")
+        .queryParam("fromPublishDate", "2019-01-12")
+        .queryParam("toPublishDate", "2020-12-12")
+        .build().toUri();
+
+    //when - then
+    webClient.get()
+        .uri(uri)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBodyList(ArticleDto.class)
+        .hasSize(2);
+  }
+
+
+//
+//  @Test
+//  void shouldCreateCorrectQueryWithAllFields() {
+//    //given
+//    SearchArticleRequest request = new SearchArticleRequest("health", "Pulitzer", LocalDate.parse("2019-01-01"), LocalDate.parse("2020-01-25"));
+//    ArgumentCaptor<Predicate> predicateArgumentCaptor = ArgumentCaptor.forClass(Predicate.class);
+//
+//    //when
+//    articleService.searchArticles(request);
+//    verify(articleRepository).findAll(predicateArgumentCaptor.capture());
+//    Predicate query = predicateArgumentCaptor.getValue();
+//
+//    //then
+//    assertEquals("article.deleted = false && eqIc(any(article.authors),Pulitzer) && eqIc(any(article.keywords),health) " +
+//            "&& article.publishDate > 2018-12-31 && article.publishDate < 2020-01-26",
+//        query.toString());
+//  }
+
   private Article generateArticleForTest() {
-    CreateArticleRequest request = new CreateArticleRequest("Corona Virus!" + UUID.randomUUID().toString(),
+    return generateArticleForTest(
+        "Corona Virus!" + UUID.randomUUID().toString(),
         "Is it a worldwide threat?" + UUID.randomUUID().toString(),
         "We should be careful..." + UUID.randomUUID().toString(),
-        LocalDate.parse("2020-01-01"),
         Set.of("Cenk Akin", "Pulitzer", UUID.randomUUID().toString()),
-        Set.of("health", UUID.randomUUID().toString())
-    );
+        Set.of("health", UUID.randomUUID().toString()),
+        LocalDate.parse("2020-01-01"));
+  }
+
+  private List<Article> generateArticlesForTest() {
+    Article article1 = generateArticleForTest("header1", "shortDescription1", "text1", Set.of("author1", "author2"),
+        Set.of("keyword1", "keyword2"), LocalDate.parse("2019-09-01"));
+    Article article2 = generateArticleForTest("header2", "shortDescription2", "text2", Set.of("author1", "author3"),
+        Set.of("keyword1", "keyword3"), LocalDate.parse("2020-01-01"));
+    return List.of(article1, article2);
+  }
+
+  private Article generateArticleForTest(String header, String shortDescription,
+                                         String text, Set<String> authors, Set<String> keywords,
+                                         LocalDate publishDate) {
+    CreateArticleRequest request = new CreateArticleRequest(header, shortDescription, text, publishDate, authors, keywords);
     return Article.fromCreateArticleRequest(request);
   }
 }
